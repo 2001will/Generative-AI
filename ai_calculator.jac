@@ -1,11 +1,16 @@
 import re
+import from byllm.llm { Model }
+
+glob llm = Model(model_name="gemini/gemini-2.0-flash", verbose=False);
+
+"""Convert natural language math into a Python expression."""
+def ai_parse_natural_language(input_str: str) -> str by llm();
 
 walker Calculator:
     has input_str: str
     has result: float
 
     can parse_expression():
-        # Try to directly evaluate as a math expression
         try:
             self.result = eval(self.input_str)
             return True
@@ -13,27 +18,12 @@ walker Calculator:
             return False
 
     can ai_parse():
-        # Map English words to operators
-        ops = {
-            "plus": "+",
-            "add": "+",
-            "minus": "-",
-            "subtract": "-",
-            "times": "*",
-            "multiply": "*",
-            "x": "*",
-            "divided by": "/",
-            "divide": "/"
-        }
-        # Lowercase for easy matching
-        query = self.input_str.lower()
-        # Replace English operators with symbols
-        for word, op in ops.items():
-            query = query.replace(word, f" {op} ")
-        # Remove non-number/non-operator words
-        query = re.sub(r'[^0-9\+\-\*/\. ]', '', query)
+        # LLM-powered fallback for complex/natural language queries
+        parsed_expr = ai_parse_natural_language(self.input_str)
+        # Remove unsafe characters for eval
+        parsed_expr = re.sub(r'[^0-9\+\-\*/\. ]', '', parsed_expr)
         try:
-            self.result = eval(query)
+            self.result = eval(parsed_expr)
             return True
         except:
             return False
@@ -46,6 +36,8 @@ walker Calculator:
         else:
             print("Sorry, I couldn't understand your input.")
 
-init:
-    input_str = input("Enter calculation (e.g., '5+3' or 'What is 5 plus 3?'): ")
+entry {
+    print("=== AI-Enhanced Jaclang Calculator ===")
+    print("Type a math expression (e.g., 5+3) or a question (e.g., What is 5 plus 3?)")
+    input_str = input("Enter calculation: ")
     Calculator(input_str=input_str).run()
